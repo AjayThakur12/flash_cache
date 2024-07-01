@@ -1,5 +1,20 @@
 use std::io::{Write};
-use std::net::{TcpListener};
+use std::{
+    io::{prelude::*, BufReader},
+    net::{TcpListener, TcpStream},
+};
+
+fn handle_connection(mut stream: TcpStream) {
+    println!("Request::");
+    let mut buffer = [0; 512];
+
+    stream.read(&mut buffer).unwrap();
+
+    println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
+
+    let response = "HTTP/1.1 200 OK\r\n\r\n";
+    stream.write_all(response.as_bytes()).unwrap();
+}
 
 fn main() {
     println!("******************! Flash Cache Server !*******************");
@@ -8,13 +23,13 @@ fn main() {
 
     for stream in listener.incoming() {
         match stream {
-            Ok(mut stream) => {
-                println!("accepted new connection");
-                let response = "+PONG\r\n";
-                stream.write(response.as_bytes()).unwrap();
+            Ok(stream) => {
+                println!("New connection: {}", stream.peer_addr().unwrap());
+                handle_connection(stream)
             }
             Err(e) => {
-                println!("error: {}", e);
+                println!("Error: {}", e);
+                /* connection failed */
             }
         }
     }
